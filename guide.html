@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ImageLab の使い方</title>
+<meta name="description" content="ImageLab の使い方。3分で分かる触り方、画面の見方、キーボード操作、写真のお悩み6景、よくある質問。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231b1f24'/%3E%3Crect x='6' y='6' width='9' height='9' fill='%23e05c5c'/%3E%3Crect x='17' y='6' width='9' height='9' fill='%235ca8e0'/%3E%3Crect x='6' y='17' width='9' height='9' fill='%235ce08a'/%3E%3Crect x='17' y='17' width='9' height='9' fill='%23e0c95c'/%3E%3C/svg%3E">
+<style>
+/* アプリ（css/style.css）と同じ配色。こちらは読み物なので縦に流す。 */
+:root {
+  --bg: #0d1017; --panel: #141821; --panel2: #182030; --line: #263043;
+  --text: #dfe5ef; --dim: #8b95a8; --accent: #7fd4ff; --accent-dim: #2b6d8c;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.85 "Segoe UI", "Yu Gothic UI", system-ui, sans-serif;
+}
+header {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 0 16px; min-height: 52px;
+  background: linear-gradient(180deg, #182030, #131a26);
+  border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5;
+}
+header h1 { margin: 0; font-size: 17px; letter-spacing: .06em; color: var(--accent); font-weight: 600; }
+header .sub { color: var(--dim); font-size: 13px; }
+.btnlink {
+  display: inline-block; text-decoration: none;
+  background: var(--accent-dim); border: 1px solid #3d8bad; color: #eaf7ff;
+  border-radius: 5px; padding: 6px 14px; font-size: 13px;
+}
+.btnlink:hover { background: #35809f; }
+main { max-width: 860px; margin: 0 auto; padding: 8px 20px 80px; }
+h2 {
+  font-size: 20px; margin: 44px 0 14px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--line); color: var(--accent);
+}
+h2:first-of-type { margin-top: 28px; }
+h3 { font-size: 16px; margin: 28px 0 8px; }
+p { margin: 12px 0; }
+a { color: var(--accent); }
+code, kbd {
+  background: var(--panel2); border: 1px solid var(--line); border-radius: 4px;
+  padding: 1px 6px; font-family: "Consolas", "Yu Gothic UI", monospace; font-size: 13px;
+}
+kbd { font-weight: 600; color: var(--accent); }
+table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; }
+th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+th { background: var(--panel2); color: var(--dim); font-weight: 600; white-space: nowrap; }
+td strong { color: var(--accent); }
+.lead {
+  background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: 6px; padding: 14px 18px; margin: 20px 0;
+}
+.note { color: var(--dim); font-size: 13.5px; }
+ol li, ul li { margin: 8px 0; }
+.steps { counter-reset: s; list-style: none; padding: 0; }
+.steps li {
+  counter-increment: s; position: relative; padding: 14px 18px 14px 56px; margin: 10px 0;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+}
+.steps li::before {
+  content: counter(s); position: absolute; left: 16px; top: 13px;
+  width: 26px; height: 26px; line-height: 26px; text-align: center;
+  background: var(--accent-dim); color: #eaf7ff; border-radius: 50%; font-weight: 700; font-size: 14px;
+}
+.tablewrap { overflow-x: auto; }
+footer {
+  border-top: 1px solid var(--line); margin-top: 56px; padding: 20px;
+  color: var(--dim); font-size: 13px; text-align: center;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ImageLab</h1>
+  <span class="sub">使い方</span>
+  <a class="btnlink" href="index.html">← ImageLab を開く</a>
+</header>
+
+<main>
+
+<div class="lead">
+  <strong>ImageLab は、画像処理の「中身」をその場でつまみを動かして見るための道具です。</strong><br>
+  レタッチソフトの〈ぼかし〉や〈シャープ〉のボタンの内側で何が起きているのかを、
+  数式ではなく<strong>絵の変化で</strong>確かめられます。写真を仕上げるための道具ではありません。
+</div>
+
+<p class="note">
+  読み込んだ画像は、お使いのブラウザの中だけで処理されます。<strong>どこにも送信されず、保存もされません。</strong>
+  インストールも会員登録も不要です。
+</p>
+
+<h2>3分で分かる触り方</h2>
+
+<ol class="steps">
+  <li><strong>絵を用意する。</strong>ヘッダの「サンプル」から選ぶのがいちばん早いです。
+    自分の写真で試すなら［画像を開く］か、画面にドラッグ＆ドロップしてください。</li>
+  <li><strong>左のリストから処理を1つ選ぶ。</strong>迷ったら〈トーンカーブ〉か〈平均化 / ガウシアン〉から。</li>
+  <li><strong>右の「パラメータ」のつまみを動かし、<kbd>3</kbd> と <kbd>2</kbd> を交互に押す。</strong>
+    <kbd>3</kbd> が処理前、<kbd>2</kbd> が処理後です。パタパタ切り替えると、何が変わったのかがはっきり分かります。</li>
+</ol>
+
+<p>右の「解説」には、その処理の原理・式・見どころが書いてあります。<strong>ここがこの道具の本体</strong>だと思ってください。</p>
+
+<h2>画面の見方</h2>
+
+<div class="tablewrap">
+<table>
+  <tr><th>場所</th><th>中身</th></tr>
+  <tr><td><strong>左</strong></td><td>処理のリスト。カテゴリごとに 22 の処理が並んでいます</td></tr>
+  <tr><td><strong>中央</strong></td><td>絵。まん中の縦線（丸いつまみ）をドラッグすると、左が処理前・右が処理後の境目が動きます</td></tr>
+  <tr><td><strong>右</strong></td><td>上が「パラメータ」（つまみ）、下が「解説」</td></tr>
+  <tr><td><strong>下</strong></td><td>ヒストグラム（明るさの分布）／ラインプロファイル（1行ぶんの明るさの断面）／計算時間</td></tr>
+</table>
+</div>
+
+<h3>ルーペ</h3>
+<p>マウスを絵の上に乗せると拡大鏡が付いてきます。倍率は下のスライダーで変えられます。
+<strong>まん中の赤い枠が1画素</strong>です。デモザイクやノイズの粒を見るときに使います。</p>
+
+<h2>キーボード</h2>
+
+<div class="tablewrap">
+<table>
+  <tr><th>キー</th><th>はたらき</th></tr>
+  <tr><td><kbd>1</kbd></td><td>分割表示（左が処理前・右が処理後）</td></tr>
+  <tr><td><kbd>2</kbd></td><td><strong>処理後</strong>だけを表示</td></tr>
+  <tr><td><kbd>3</kbd></td><td><strong>処理前（原画）</strong>だけを表示</td></tr>
+  <tr><td><kbd>4</kbd></td><td>差分表示。<strong>処理が実際に足し引きした量</strong>だけが見えます</td></tr>
+</table>
+</div>
+
+<p class="note"><kbd>2</kbd> と <kbd>3</kbd> の往復がいちばん使います。変化が小さい処理ほど、この往復でしか分かりません。</p>
+
+<h2>何ができるのか ── 写真のお悩み6景</h2>
+
+<p>最初の入口としておすすめの6つです。左のリストから選んで、<kbd>3</kbd> ⇄ <kbd>2</kbd> で往復してみてください。</p>
+
+<div class="tablewrap">
+<table>
+  <tr><th>お悩み</th><th>使う処理</th><th>見えること</th></tr>
+  <tr>
+    <td><strong>逆光で手前が真っ黒</strong></td>
+    <td>トーンカーブ<br>CLAHE</td>
+    <td>空を白飛びさせずに、影の中だけを起こせます。全体を明るくするのとは別ものです</td>
+  </tr>
+  <tr>
+    <td><strong>暗い場所でザラつく</strong></td>
+    <td>ノイズ除去の比較</td>
+    <td>ぼかせば粒は消えますが、顔や看板もぼけます。バイラテラルなら輪郭を残して粒だけ取れます</td>
+  </tr>
+  <tr>
+    <td><strong>なんとなく眠い・甘い</strong></td>
+    <td>アンシャープマスク</td>
+    <td>「シャープ」の正体は、ぼかした絵との差を元に足し戻しているだけ、と分かります</td>
+  </tr>
+  <tr>
+    <td><strong>雑誌をスキャンしたら網目が出た</strong></td>
+    <td>ノイズ付加（周期）<br>→ スペクトルマスク</td>
+    <td>写真を「模様の楽譜」に開いて、縞の音符だけ塗って消し、また戻します。<strong>いちばんの見どころ</strong></td>
+  </tr>
+  <tr>
+    <td><strong>広角で建物が歪む・傾く</strong></td>
+    <td>レンズ歪みと補正<br>アフィン変換</td>
+    <td>曲がった柱がまっすぐ戻ります。傾き直しは画素の作り直しでもある、と分かります</td>
+  </tr>
+  <tr>
+    <td><strong>影の落ちた書類が読めない</strong></td>
+    <td>二値化（大津／適応的）</td>
+    <td>写真全体で1つの境目を決めると潰れます。画素ごとに決めれば読めます</td>
+  </tr>
+</table>
+</div>
+
+<p>このほかに、エッジ検出（Sobel、Canny の6段階表示）、周波数フィルタ、モルフォロジー、
+デモザイク（Bayer 配列 → バイリニア vs AHD）などが入っています。全部で 22 の処理です。</p>
+
+<h2>よくある質問</h2>
+
+<h3>読み込んだ写真は、どこかに送られますか？</h3>
+<p><strong>送られません。</strong>処理はすべてブラウザの中で行われます。サーバへの送信も、保存もしていません。
+このページを開いたあとはネットを切っても動きます。</p>
+
+<h3>写真を読み込んだあと、うっかり <kbd>F5</kbd> を押してしまいました</h3>
+<p><strong>写真は消えます。</strong>ブラウザの中にしか無いためです。読み込み直してください。
+処理を切り替えるのに再読み込みは要りません。左のリストから選ぶだけです。</p>
+
+<h3>重い処理で画面が固まりませんか？</h3>
+<p>固まりません。重い処理はブラウザの裏方（Web Worker）が<strong>複数のコアで分担</strong>します。
+右下の「実行」の欄に <code>Worker 8 並列</code> のように出ます。計算中も、途中経過が上から順に降りてきます。</p>
+
+<h3>結果を保存できますか？</h3>
+<p>ヘッダの［PNG保存］で、いま表示している絵を保存できます。</p>
+
+<h3>もっと大きく／細かく見たい</h3>
+<p>ヘッダの「作業解像度」を上げてください。既定は長辺 640 で、これはつまみを動かしながら
+見せられる速さを優先した設定です。細部を見るときだけ 1024 以上にするのがおすすめです。</p>
+
+<h3>見せたい状態を、そのまま人に送れますか？</h3>
+<p>できます。アドレスの後ろにハッシュを付けると、その状態で開きます。</p>
+<p><code>index.html#op=fftmask&amp;sample=periodic</code>
+… スペクトルマスクを、周期ノイズのサンプルで開く</p>
+
+<h3>ネットにつながっていない場所（Zoom の実演など）で使えますか？</h3>
+<p>使えます。<a href="https://github.com/m3-kawasaki/imagelab">GitHub のページ</a>から一式をダウンロードして、
+<code>index.html</code> をダブルクリックしてください。サーバもインストールも不要です。</p>
+
+<h2>もっと詳しく</h2>
+
+<div class="tablewrap">
+<table>
+  <tr><th>見るもの</th><th>中身</th></tr>
+  <tr><td><a href="docs/処理解説.md">docs/処理解説.md</a></td><td>22処理ぶんの解説を1つにまとめたもの（アプリの解説パネルと同じ文章）</td></tr>
+  <tr><td><a href="https://github.com/m3-kawasaki/imagelab">GitHub リポジトリ</a></td><td>ソースコード一式と、作りの解説。外部ライブラリは1つも使っていません（FFT も自前です）</td></tr>
+  <tr><td><a href="_selfcheck.html">_selfcheck.html</a></td><td>開発用。22処理 × 10サンプルを総当たりで動かして、例外が出ないかを確かめるページ</td></tr>
+</table>
+</div>
+
+</main>
+
+<footer>
+  ImageLab — MIT ライセンス　／　<a href="index.html">ImageLab を開く</a>
+</footer>
+
+</body>
+</html>
