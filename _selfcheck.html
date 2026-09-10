@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ImageLab 自己チェック（開発用）</title>
+<link rel="stylesheet" href="css/style.css">
+<style>#dbg{position:fixed;left:0;top:0;z-index:9999;background:#000;color:#0f0;font:12px monospace;white-space:pre;padding:8px;max-height:100vh;overflow:auto}</style>
+</head>
+<body>
+<pre id="dbg">running…</pre>
+
+<header id="appbar">
+  <h1>ImageLab</h1>
+  <div class="bar">
+    <button id="btn-open" class="primary">画像を開く</button>
+    <input type="file" id="file-input" accept="image/*" hidden>
+    <label class="field">サンプル <select id="sample-select"></select></label>
+    <label class="field">作業解像度
+      <select id="res-select">
+        <option value="640" selected>長辺 640</option>
+        <option value="1024">長辺 1024</option>
+        <option value="1600">長辺 1600</option>
+        <option value="0">原寸</option>
+      </select>
+    </label>
+    <button id="btn-save">PNG保存</button>
+    <span id="img-info" class="info"></span>
+  </div>
+</header>
+<div id="sample-hint-bar"><span id="sample-hint"></span></div>
+<main>
+  <nav id="oplist"></nav>
+  <section id="stage">
+    <div id="viewer-wrap">
+      <canvas id="view"></canvas><canvas id="loupe"></canvas><div id="split-handle"><i></i></div>
+    </div>
+    <div id="viewer-tools">
+      <div class="group">
+        <label><input type="radio" name="vmode" value="split" checked> 分割</label>
+        <label><input type="radio" name="vmode" value="result"> 処理後</label>
+        <label><input type="radio" name="vmode" value="source"> 原画</label>
+        <label><input type="radio" name="vmode" value="diff"> 差分</label>
+      </div>
+      <div class="group" id="diff-gain-row" style="display:none">
+        <input type="range" id="diff-gain" min="1" max="20" step="1" value="4"><b id="diff-gain-val">×4</b>
+      </div>
+      <div class="group">
+        <label><input type="checkbox" id="loupe-on" checked> ルーペ</label>
+        <input type="range" id="loupe-zoom" min="2" max="24" step="1" value="8"><b id="loupe-zoom-val">×8</b>
+      </div>
+      <div class="group">
+        <label><input type="checkbox" id="prog-on" checked> 逐次表示</label>
+      </div>
+    </div>
+  </section>
+  <aside id="side">
+    <div class="panel"><h2 class="ph">パラメータ</h2><div id="params"></div></div>
+    <div class="panel grow"><h2 class="ph">解説</h2><div id="explain"></div></div>
+  </aside>
+</main>
+<footer id="bottom">
+  <div class="cell"><canvas id="hist"></canvas>
+    <div class="cellbar">
+      <label><input type="radio" name="hch" value="y" checked> 輝度</label>
+      <label><input type="radio" name="hch" value="rgb"> RGB</label>
+    </div></div>
+  <div class="cell"><canvas id="profile"></canvas></div>
+  <div id="stats">
+    <div id="prog"><div class="track"><i id="prog-bar"></i></div><span id="prog-text"></span></div>
+    <div id="stat-rows"></div>
+  </div>
+</footer>
+
+<script>
+window.__errs = [];
+window.addEventListener('error', function (e) {
+  window.__errs.push('ERROR: ' + e.message + ' @ ' + (e.filename || '').split('/').pop() + ':' + e.lineno);
+});
+window.addEventListener('unhandledrejection', function (e) {
+  window.__errs.push('REJECT: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+});
+</script>
+<script src="js/core.js"></script>
+<script src="js/fft.js"></script>
+<script src="js/registry.js"></script>
+<script src="js/worker.js"></script>
+<script src="js/samples.js"></script>
+<script src="js/viewer.js"></script>
+<script src="js/histogram.js"></script>
+<script src="js/ops/tone.js"></script>
+<script src="js/ops/gamma.js"></script>
+<script src="js/ops/histeq.js"></script>
+<script src="js/ops/clahe.js"></script>
+<script src="js/ops/blur.js"></script>
+<script src="js/ops/median.js"></script>
+<script src="js/ops/bilateral.js"></script>
+<script src="js/ops/unsharp.js"></script>
+<script src="js/ops/fft.js"></script>
+<script src="js/ops/fftfilter.js"></script>
+<script src="js/ops/fftmask.js"></script>
+<script src="js/ops/noise.js"></script>
+<script src="js/ops/denoisecmp.js"></script>
+<script src="js/ops/sobel.js"></script>
+<script src="js/ops/laplacian.js"></script>
+<script src="js/ops/canny.js"></script>
+<script src="js/ops/threshold.js"></script>
+<script src="js/ops/morphology.js"></script>
+<script src="js/ops/demosaic.js"></script>
+<script src="js/ops/affine.js"></script>
+<script src="js/ops/lensdist.js"></script>
+<script src="js/main.js"></script>
+
+<script>
+/* 全処理ボタンと全サンプルを順に叩いて、例外が出ないか・canvas の寸法が合っているかを見る。
+   Worker 化で実行が非同期になったので、1つ叩くたびに結果が出るまで待ってから次へ進む。 */
+var log = [];
+var dbg = document.getElementById('dbg');
+function say(s) { log.push(s); dbg.textContent = log.join('\n'); }
+
+function geom(id) {
+  var c = document.getElementById(id), r = c.getBoundingClientRect();
+  var dpr = window.devicePixelRatio || 1;
+  var ok = Math.abs(c.width - Math.round(r.width * dpr)) <= 1 && Math.abs(c.height - Math.round(r.height * dpr)) <= 1;
+  return id + ': backing ' + c.width + 'x' + c.height + '  css ' + Math.round(r.width) + 'x' + Math.round(r.height) +
+         '  dpr ' + dpr + '  ' + (ok ? 'OK' : '←ずれ');
+}
+
+/* 計算が終わるまで待つ。終わると #stat-rows に「計算時間」の行が出る */
+function waitIdle(cb, tries) {
+  tries = tries || 0;
+  var rows = document.getElementById('stat-rows').textContent;
+  var busy = document.getElementById('prog').classList.contains('on');
+  if (!busy && /計算時間/.test(rows)) { cb(true); return; }
+  if (tries > 300) { cb(false); return; }          /* 15 秒であきらめる */
+  setTimeout(function () { waitIdle(cb, tries + 1); }, 50);
+}
+
+function statOf(name) {
+  var rows = document.querySelectorAll('#stat-rows .stat');
+  for (var i = 0; i < rows.length; i++) {
+    var s = rows[i].querySelector('span'), b = rows[i].querySelector('b');
+    if (s && b && s.textContent === name) return b.textContent;
+  }
+  return '—';
+}
+
+function eachSeries(items, step, done) {
+  var i = 0;
+  (function next() {
+    if (i >= items.length) { done(); return; }
+    step(items[i], i, function () { i++; next(); });
+  })();
+}
+
+setTimeout(function () {
+  var ops = document.querySelectorAll('#oplist .op');
+  say('Worker: ' + (IL.jobs.available() ? '使える（最大 ' + IL.jobs.cores + ' 並列）' : '使えない → 時間分割'));
+  say('処理ボタン ' + ops.length + ' 個');
+
+  eachSeries(Array.prototype.slice.call(ops), function (btn, i, next) {
+    var before = window.__errs.length;
+    document.getElementById('stat-rows').innerHTML = '';
+    btn.click();
+    waitIdle(function (ok) {
+      say('  ' + (window.__errs.length > before ? 'NG  ' : (ok ? 'ok  ' : '時間切れ ')) +
+          btn.textContent.padEnd(16, '　') +
+          '  ' + statOf('計算時間').padStart(10) +
+          '  ' + statOf('実行') +
+          '  params=' + document.querySelectorAll('#params .prow').length +
+          '  explain=' + (document.getElementById('explain').textContent.length > 100 ? 'あり' : 'なし'));
+      next();
+    });
+  }, function () {
+
+    var sel = document.getElementById('sample-select');
+    say('サンプル ' + sel.options.length + ' 個');
+    var idx = [];
+    for (var k = 0; k < sel.options.length; k++) idx.push(k);
+
+    eachSeries(idx, function (k, i, next) {
+      var b2 = window.__errs.length;
+      document.getElementById('stat-rows').innerHTML = '';
+      sel.selectedIndex = k;
+      sel.dispatchEvent(new Event('change'));
+      waitIdle(function (ok) {
+        say('  ' + (window.__errs.length > b2 ? 'NG  ' : (ok ? 'ok  ' : '時間切れ ')) +
+            sel.options[k].textContent + '  ' + document.getElementById('img-info').textContent);
+        next();
+      });
+    }, function () {
+
+      /* 重い処理を続けて叩き、前のジョブが捨てられるか（積み上がらないか）を見る */
+      say('--- 取り消しの確認（バイラテラルを5回続けて叩く） ---');
+      var bi = document.querySelector('#oplist .op[data-id="bilateral"]');
+      var e0 = window.__errs.length, t0 = performance.now();
+      for (var n = 0; n < 5; n++) bi.click();
+      waitIdle(function (ok) {
+        var el = performance.now() - t0;
+        say('  ' + (window.__errs.length > e0 ? 'NG' : 'ok') +
+            '  5回叩いて ' + el.toFixed(0) + ' ms で決着（積み上がっていれば5倍かかる）  ' + statOf('実行'));
+
+        /* トーンカーブに戻して curve ウィジェットの寸法も見る */
+        document.querySelector('#oplist .op[data-id="tone"]').click();
+        setTimeout(function () {
+          say('--- canvas 寸法 ---');
+          say(geom('view')); say(geom('hist')); say(geom('profile'));
+          var cc = document.querySelector('canvas.curve');
+          say('curve canvas: ' + (cc ? cc.width + 'x' + cc.height : 'なし'));
+          say('プリセット: ' + document.querySelectorAll('.presets button').length + ' 個');
+          say('--- エラー ' + window.__errs.length + ' 件 ---');
+          window.__errs.forEach(function (e) { say('  ' + e); });
+          say(window.__errs.length === 0 ? '\n例外なし' : '\n例外あり');
+        }, 400);
+      });
+    });
+  });
+}, 900);
+</script>
+</body>
+</html>

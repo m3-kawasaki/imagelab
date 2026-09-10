@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ImageLab — 画像処理デモ集</title>
+<meta name="description" content="ブラウザだけで動く画像処理デモ集。トーンカーブ・ノイズ除去・FFT スペクトル・二値化・デモザイク・レンズ歪み補正などを、その場でパラメータを動かしながら見比べられます。画像は端末の外に出ません。">
+<!-- 外部ファイルを増やさないため、アイコンは data URI で埋め込む（favicon.ico の 404 除け） -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231b1f24'/%3E%3Crect x='6' y='6' width='9' height='9' fill='%23e05c5c'/%3E%3Crect x='17' y='6' width='9' height='9' fill='%235ca8e0'/%3E%3Crect x='6' y='17' width='9' height='9' fill='%235ce08a'/%3E%3Crect x='17' y='17' width='9' height='9' fill='%23e0c95c'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header id="appbar">
+  <h1>ImageLab</h1>
+  <div class="bar">
+    <button id="btn-open" class="primary">画像を開く</button>
+    <input type="file" id="file-input" accept="image/*" hidden>
+
+    <label class="field">サンプル
+      <select id="sample-select"></select>
+    </label>
+
+    <label class="field">作業解像度
+      <select id="res-select">
+        <option value="640" selected>長辺 640</option>
+        <option value="1024">長辺 1024</option>
+        <option value="1600">長辺 1600</option>
+        <option value="0">原寸</option>
+      </select>
+    </label>
+
+    <button id="btn-save">PNG保存</button>
+    <span id="img-info" class="info"></span>
+  </div>
+</header>
+
+<div id="sample-hint-bar"><span id="sample-hint"></span>　／　画像はドラッグ＆ドロップでも読み込めます（外部には一切送信しません）</div>
+
+<main>
+  <nav id="oplist"></nav>
+
+  <section id="stage">
+    <div id="viewer-wrap">
+      <canvas id="view"></canvas>
+      <canvas id="loupe"></canvas>
+      <div id="split-handle"><i></i></div>
+    </div>
+
+    <div id="viewer-tools">
+      <div class="group">
+        <span class="gl">表示</span>
+        <label><input type="radio" name="vmode" value="split" checked> 分割 <kbd>1</kbd></label>
+        <label><input type="radio" name="vmode" value="result"> 処理後 <kbd>2</kbd></label>
+        <label><input type="radio" name="vmode" value="source"> 原画 <kbd>3</kbd></label>
+        <label><input type="radio" name="vmode" value="diff"> 差分 <kbd>4</kbd></label>
+      </div>
+      <div class="group" id="diff-gain-row" style="display:none">
+        <span class="gl">差分ゲイン</span>
+        <input type="range" id="diff-gain" min="1" max="20" step="1" value="4">
+        <b id="diff-gain-val">×4</b>
+      </div>
+      <div class="group">
+        <span class="gl">ルーペ</span>
+        <label><input type="checkbox" id="loupe-on" checked> 表示</label>
+        <input type="range" id="loupe-zoom" min="2" max="24" step="1" value="8">
+        <b id="loupe-zoom-val">×8</b>
+      </div>
+      <div class="group">
+        <span class="gl">逐次表示</span>
+        <label title="重い処理の途中経過を、処理済みの帯が上から降りてくる形で見せます。実演向け。">
+          <input type="checkbox" id="prog-on" checked> 計算中の途中を見せる</label>
+      </div>
+    </div>
+  </section>
+
+  <aside id="side">
+    <div class="panel">
+      <h2 class="ph">パラメータ</h2>
+      <div id="params"></div>
+    </div>
+    <div class="panel grow">
+      <h2 class="ph">解説</h2>
+      <div id="explain"></div>
+    </div>
+  </aside>
+</main>
+
+<footer id="bottom">
+  <div class="cell">
+    <canvas id="hist"></canvas>
+    <div class="cellbar">
+      <label><input type="radio" name="hch" value="y" checked> 輝度</label>
+      <label><input type="radio" name="hch" value="rgb"> RGB</label>
+    </div>
+  </div>
+  <div class="cell">
+    <canvas id="profile"></canvas>
+  </div>
+  <div id="stats">
+    <div id="prog"><div class="track"><i id="prog-bar"></i></div><span id="prog-text"></span></div>
+    <div id="stat-rows"></div>
+  </div>
+</footer>
+
+<!-- 素の classic script。file:// でそのまま開けるよう ES Modules は使っていない。
+     処理を1つ足すときは js/ops/ にファイルを置き、ここに1行足す。 -->
+<script src="js/core.js"></script>
+<script src="js/fft.js"></script>
+<script src="js/registry.js"></script>
+<script src="js/worker.js"></script>
+<script src="js/samples.js"></script>
+<script src="js/viewer.js"></script>
+<script src="js/histogram.js"></script>
+
+<script src="js/ops/tone.js"></script>
+<script src="js/ops/gamma.js"></script>
+<script src="js/ops/histeq.js"></script>
+<script src="js/ops/clahe.js"></script>
+
+<script src="js/ops/blur.js"></script>
+<script src="js/ops/median.js"></script>
+<script src="js/ops/bilateral.js"></script>
+<script src="js/ops/unsharp.js"></script>
+
+<script src="js/ops/fft.js"></script>
+<script src="js/ops/fftfilter.js"></script>
+<script src="js/ops/fftmask.js"></script>
+
+<script src="js/ops/noise.js"></script>
+<script src="js/ops/denoisecmp.js"></script>
+
+<script src="js/ops/sobel.js"></script>
+<script src="js/ops/laplacian.js"></script>
+<script src="js/ops/canny.js"></script>
+
+<script src="js/ops/threshold.js"></script>
+<script src="js/ops/morphology.js"></script>
+
+<script src="js/ops/demosaic.js"></script>
+<script src="js/ops/affine.js"></script>
+<script src="js/ops/lensdist.js"></script>
+
+<script src="js/main.js"></script>
+</body>
+</html>
