@@ -769,19 +769,26 @@
 
   /* ---------------- 解説パネル ---------------- */
 
+  /* doc の文章は **強調** の書き方を使っている（docs/処理解説.md でもそのまま効く）。
+     ここで <strong> に直さないと、画面にアスタリスクが見えてしまう。
+     docs/_gen_docs.js の HTML 出力にも同じ変換を置いてある。 */
+  function emphasize(s) {
+    return String(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  }
+
   function buildDoc(op) {
     var d = op.doc, host = $('explain');
     var html = '<h2>' + op.label + '</h2>';
     if (d.principle) {
       html += '<h3>原理</h3>';
       d.principle.split('\n\n').forEach(function (par) {
-        html += '<p>' + par.replace(/\n/g, '<br>') + '</p>';
+        html += '<p>' + emphasize(par).replace(/\n/g, '<br>') + '</p>';
       });
     }
     if (d.formula) html += '<h3>式</h3><pre>' + d.formula + '</pre>';
     if (d.notes && d.notes.length) {
       html += '<h3>注意点・見どころ</h3><ul>';
-      d.notes.forEach(function (n) { html += '<li>' + n + '</li>'; });
+      d.notes.forEach(function (n) { html += '<li>' + emphasize(n) + '</li>'; });
       html += '</ul>';
     }
     host.innerHTML = html;
